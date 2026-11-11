@@ -29,14 +29,52 @@ Tool đã báo rõ `TimeoutError`, nhưng final answer chỉ nói chung chung �
 
 | Chỉ số | `eval_before.json` | `eval_after.json` |
 |---|---|---|
-| Điểm tổng | `null` (21/22 case, partial mean 81.67) | Chưa chạy |
-| Điểm case đã chọn | 50 | Chưa chạy |
-| Số model calls | 2 | Chưa chạy |
-| Token, chi phí nếu có | Không ghi nhận chi tiết cho E6 | Chưa chạy |
+| Điểm tổng | 75.00 | 84.59 |
+| Điểm case đã chọn | 50 | 70 |
+| Số model calls | 2 | 4 |
+| Token, chi phí nếu có | 596 tokens; $0.000118 | 1,502 tokens; $0.000303 |
+
+### So sánh đầy đủ từng case
+
+| Case | Điểm trước → sau | Model calls trước → sau | Token trước → sau | Chi phí trước → sau |
+|---|---:|---:|---:|---:|
+| E1 | 75 → 60 | 2 → 2 | 1,092 → 1,208 | $0.000252 → $0.000322 |
+| E2 | 75 → 80 | 3 → 3 | 1,989 → 3,139 | $0.000412 → $0.000738 |
+| E3 | 100 → 100 | 3 → 3 | 1,843 → 1,902 | $0.000435 → $0.000471 |
+| E4 | 100 → 100 | 2 → 2 | 1,349 → 1,367 | $0.000342 → $0.000353 |
+| E5 | 80 → 80 | 2 → 2 | 937 → 926 | $0.000240 → $0.000233 |
+| E6 | 50 → 70 | 2 → 4 | 596 → 1,502 | $0.000118 → $0.000303 |
+| A1 | 95 → 95 | 3 → 3 | 5,466 → 5,105 | $0.001246 → $0.001202 |
+| A2 | 80 → 100 | 2 → 2 | 1,571 → 1,646 | $0.000366 → $0.000411 |
+| A3 | 75 → 75 | 2 → 2 | 1,398 → 1,308 | $0.000390 → $0.000336 |
+| A4 | 95 → 100 | 2 → 2 | 1,494 → 1,283 | $0.000399 → $0.000273 |
+| A5 | 55 → 93 | 3 → 2 | 4,503 → 1,444 | $0.001091 → $0.000451 |
+| A6 | 65 → 78 | 3 → 3 | 2,738 → 2,708 | $0.000632 → $0.000691 |
+| A7 | 75 → 75 | 3 → 3 | 2,041 → 2,017 | $0.000524 → $0.000510 |
+| A8 | 90 → 100 | 2 → 2 | 1,892 → 1,905 | $0.000564 → $0.000572 |
+| H1 | 60 → 60 | 2 → 2 | 2,064 → 2,162 | $0.000657 → $0.000716 |
+| H2 | 50 → 100 | 2 → 2 | 1,251 → 1,759 | $0.000349 → $0.000477 |
+| H3 | 70 → 85 | 3 → 3 | 1,644 → 1,723 | $0.000396 → $0.000443 |
+| H4 | 100 → 100 | 1 → 1 | 431 → 444 | $0.000147 → $0.000155 |
+| H5 | 50 → 100 | 3 → 3 | 2,938 → 4,984 | $0.000620 → $0.001154 |
+| H6 | 60 → 55 | 2 → 2 | 2,958 → 2,934 | $0.000702 → $0.000688 |
+| H7 | 75 → 65 | 2 → 2 | 1,284 → 1,302 | $0.000324 → $0.000335 |
+| H8 | 75 → 90 | 2 → 2 | 2,218 → 2,240 | $0.000650 → $0.000740 |
+
+Tổng: điểm `75.00 → 84.59`; model calls `51 → 52`; token `43,697 → 45,008`; chi phí `$0.010859 → $0.011573`.
+
+Trace E6 sau cải tiến có event `validation_missing_tool_error` ở step 3, sau hai lần tool trả `TimeoutError`, rồi model mới hoàn tất. Các case còn lại không có event validation mới.
 
 - Lỗi đã giải quyết: Agent vẫn từ chối kết luận trạng thái khi timeout và nay có cơ chế yêu cầu nêu rõ `TimeoutError`.
-- Lỗi còn lại hoặc mới xuất hiện: Chưa chạy `eval_after`; điểm judge có thể dao động giữa các lần chạy.
+- Lỗi còn lại hoặc mới xuất hiện: E1 giảm 15 điểm, H6 giảm 5 điểm và H7 giảm 10 điểm; H1 vẫn 60 điểm. Các thay đổi này có thể chịu ảnh hưởng bởi output/judge của cùng model, không chỉ do code.
 
 ## 5. Giới hạn
 
-Nêu giới hạn của điểm judge, của snapshot và của việc chỉ chạy một lần mỗi phiên bản.
+- **Judge:** Cả agent và judge đều dùng `openrouter / openai/gpt-4o-mini`. Vì cùng model vừa tạo câu trả lời vừa chấm, điểm có thể bị thiên lệch; nội dung nhận xét giữa hai lần chạy cũng có thể dao động.
+- **Số lần chạy:** Mỗi phiên bản chỉ chạy một lần cho mỗi case. Vì vậy chênh lệch điểm không chứng minh hoàn toàn rằng mọi thay đổi đều đến từ code; cần chạy lặp hoặc dùng judge khác để tăng độ tin cậy.
+- **Snapshot:** Kết quả là dữ liệu snapshot, không phải trạng thái live. `captured_at` giữa các provider khác nhau và incident được báo cáo có thể là lịch sử; không được suy ra quan hệ nhân quả hoặc trạng thái hiện tại ngoài bằng chứng tool.
+- **Độ phủ dữ liệu:** Status tool chỉ trả danh sách giới hạn trong response (ví dụ tối đa 8 incident ở bonus); timeline có pagination và có thể bị cắt. Agent không thể khẳng định đã xem toàn bộ nếu còn `next_offset`.
+- **Retry/rate limit:** `RATE_LIMITED` là lỗi truy cập, không phải outage. Retry bị giới hạn bởi `max_steps` và chính sách tối đa 3 lần; kết quả vẫn có thể thiếu nếu provider liên tục trả 429.
+- **Chi phí/token:** Token và chi phí trong báo cáo là số provider trả về cho từng response, không phải hóa đơn cuối cùng; một số provider có thể không cung cấp đủ trường usage/cost.
+- **Trace/judge:** Trace có thể bị giới hạn khi gửi cho judge (grading cắt trace ở 30.000 ký tự), nên judge có thể không thấy toàn bộ dữ liệu dài. Kiểm tra URL chỉ xác nhận URL xuất hiện, không chứng minh mọi claim đều có nguồn.
+- **Sai khác file:** Console trước đó ghi `65.5/100` và `9.82/15`, trong khi `eval_bonus.json` hiện tại ghi `64.0/100` và `9.6/15`; cần xác định file nào là bản chạy cuối trước khi nộp.
